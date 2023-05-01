@@ -89,7 +89,7 @@ Add the AKS Config, Variables, and Outputs to the Configuration
 Run vim aks.tf to create your first configuration file.
 
 Enter the following configuration:
-
+```
 resource "azurerm_kubernetes_cluster" "k8s" {
     name                = var.cluster_name
     location            = azurerm_resource_group.k8s.location
@@ -124,12 +124,13 @@ resource "azurerm_kubernetes_cluster" "k8s" {
         Environment = "Development"
     }
 }
+```
 Type Esc followed by :wq to save and quit the file.
 
 Run vim variables.tf to create your next configuration file.
 
 Enter the following configuration. Be sure to replace <YOUR_RESOURCE_GROUP_LOCATION> with the location of your resource group, and replace <SERVICE_PRINCIPAL_APP_ID> and <SERVICE_PRINCIPAL_CLIENT_SECRET> with the service principal IDs generated for this lab, which can be found in the lab credentials section.
-
+```
 variable "resource_group_location" {
     default = "<YOUR_RESOURCE_GROUP_LOCATION>"
 }
@@ -157,12 +158,14 @@ variable aks_service_principal_app_id {
 variable aks_service_principal_client_secret {
     default = "<SERVICE_PRINCIPAL_CLIENT_SECRET>"
 }
+
+```
 Type Esc followed by :wq to save and quit the file.
 
 Run vim output.tf to create your final configuration file.
 
 Enter the following configuration:
-
+```
 output "resource_group_name" {
     value = azurerm_resource_group.k8s.name
 }
@@ -195,6 +198,7 @@ output "kube_config" {
 output "host" {
     value = azurerm_kubernetes_cluster.k8s.kube_config.0.host
 }
+```
 Type Esc followed by :wq to save and quit the file.
 
 Deploy and Verify the Kubernetes Cluster is Running
