@@ -84,3 +84,155 @@ Hit Enter to keep the defaults.
 Hit Enter to leave the passphrase empty.
 
 Hit Enter again to create your key pair.
+
+Add the AKS Config, Variables, and Outputs to the Configuration
+Run vim aks.tf to create your first configuration file.
+
+Enter the following configuration:
+
+resource "azurerm_kubernetes_cluster" "k8s" {
+    name                = var.cluster_name
+    location            = azurerm_resource_group.k8s.location
+    resource_group_name = azurerm_resource_group.k8s.name
+    dns_prefix          = var.dns_prefix
+
+    linux_profile {
+        admin_username = "ubuntu"
+        ssh_key {
+            key_data = file(var.ssh_public_key)
+        }
+    }
+
+    default_node_pool {
+        name            = "agentpool"
+        node_count      = var.agent_count
+        vm_size         = "Standard_D2s_v3"
+        os_disk_size_gb = 30
+    }
+
+    service_principal {
+        client_id     = var.aks_service_principal_app_id
+        client_secret = var.aks_service_principal_client_secret
+    }
+
+    network_profile {
+        load_balancer_sku = "Standard"
+        network_plugin = "kubenet"
+    }
+
+    tags = {
+        Environment = "Development"
+    }
+}
+Type Esc followed by :wq to save and quit the file.
+
+Run vim variables.tf to create your next configuration file.
+
+Enter the following configuration. Be sure to replace <YOUR_RESOURCE_GROUP_LOCATION> with the location of your resource group, and replace <SERVICE_PRINCIPAL_APP_ID> and <SERVICE_PRINCIPAL_CLIENT_SECRET> with the service principal IDs generated for this lab, which can be found in the lab credentials section.
+
+variable "resource_group_location" {
+    default = "<YOUR_RESOURCE_GROUP_LOCATION>"
+}
+
+variable "agent_count" {
+    default = 3
+}
+
+variable "ssh_public_key" {
+    default = "~/.ssh/id_rsa.pub"
+}
+
+variable "dns_prefix" {
+    default = "k8sguru"
+}
+
+variable cluster_name {
+      default = "k8sguru"
+}
+
+variable aks_service_principal_app_id {
+    default = "<SERVICE_PRINCIPAL_APP_ID>"
+}
+
+variable aks_service_principal_client_secret {
+    default = "<SERVICE_PRINCIPAL_CLIENT_SECRET>"
+}
+Type Esc followed by :wq to save and quit the file.
+
+Run vim output.tf to create your final configuration file.
+
+Enter the following configuration:
+
+output "resource_group_name" {
+    value = azurerm_resource_group.k8s.name
+}
+
+output "client_key" {
+    value = azurerm_kubernetes_cluster.k8s.kube_config.0.client_key
+}
+
+output "client_certificate" {
+    value = azurerm_kubernetes_cluster.k8s.kube_config.0.client_certificate
+}
+
+output "cluster_ca_certificate" {
+    value = azurerm_kubernetes_cluster.k8s.kube_config.0.cluster_ca_certificate
+}
+
+output "cluster_username" {
+    value = azurerm_kubernetes_cluster.k8s.kube_config.0.username
+}
+
+output "cluster_password" {
+    value = azurerm_kubernetes_cluster.k8s.kube_config.0.password
+}
+
+output "kube_config" {
+    value = azurerm_kubernetes_cluster.k8s.kube_config_raw
+    sensitive = true
+}
+
+output "host" {
+    value = azurerm_kubernetes_cluster.k8s.kube_config.0.host
+}
+Type Esc followed by :wq to save and quit the file.
+
+Deploy and Verify the Kubernetes Cluster is Running
+Run terraform fmt to check the formatting of your configuration files.
+
+Your aks.tf, output.tf, providers.tf, and variables.tf files should be listed.
+
+Run terraform validate to validate the code in your configuration files.
+
+You should see a message confirming that your configuration is valid.
+
+Run terraform plan -out aks.tfplan to create your execution plan.
+
+Run terraform apply aks.tfplan to execute your execution plan.
+
+Note: It may take a couple of minutes to deploy your resources.
+
+You will see a big block of text appear, which should mean that your cluster deployed successfully. You can scroll up to view the Apply complete message in green to confirm.
+
+Scrolling down from the Apply complete message, you can view the client_certificate, client_key, cluster_ca_certificate, cluster_password, and cluster_username. Lastly, you should see the host address, kube_config, and resource_group_name.
+
+Run the following command to move your kube_config to a different file:
+
+echo "$(terraform output kube_config)" > ./azurek8s
+Run cat ./azurek8s to check the file.
+
+You should see EOT at the beginning and end of the file, which will need to be removed.
+
+Run vim ./azurek8s to edit the file.
+
+Delete the <<EOT at the beginning and the EOT at the end of the file.
+
+Type Esc followed by :wq to save and quit the file.
+
+Run export KUBECONFIG=./azurek8s to create your environment variable.
+
+Run kubectl get nodes to check if your nodes are running and healthy.
+
+You should see your 3 nodes returned with a STATUS of Ready.
+
+Conclusion
